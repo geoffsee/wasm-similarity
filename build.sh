@@ -134,12 +134,15 @@ cat > "$PKG_DIR/package.json" <<EOF
     "wasm_similarity_bg.wasm",
     "wasm_similarity_bg.wasm.d.ts",
     "similarity_context.js",
-    "similarity_context.d.ts"
+    "similarity_context.d.ts",
+    "README.md"
   ],
   "keywords": ["wasm", "webassembly", "similarity", "cosine", "vectors"],
   "author": "geoffsee",
   "license": "AGPL-3.0"
 }
 EOF
+
+cp README.md pkg/README.md
 
 echo "[build] Done. Output in pkg/"
