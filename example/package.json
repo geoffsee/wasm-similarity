@@ -1,0 +1,21 @@
+{
+  "name": "typescript-usage-demo",
+  "version": "1.0.0",
+  "description": "Test package for wasm-similarity module",
+  "main": "wasm-similarity.test.ts",
+  "type": "module",
+  "scripts": {
+    "pretest": "cd .. && ./build.sh",
+    "test": "node --test wasm-similarity.test.ts",
+    "start": "./wasm-similarity.test.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wasm-similarity": "file:../pkg"
+  },
+  "devDependencies": {
+    "ml-distance": "^4.0.1"
+  }
+}
