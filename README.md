@@ -199,4 +199,6 @@ cd example && npm install && npm test
 
 ## License
 
-MIT OR Apache-2.0
+AGPLv3
+
+See [LICENSE](LICENSE)
