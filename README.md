@@ -30,8 +30,6 @@ npm install wasm-similarity
 Full API documentation with examples is published at:\
 **<https://geoffsee.github.io/wasm-similarity/>**
 
-_(Enable GitHub Pages → "GitHub Actions" source in repo settings.)_
-
 ## API
 
 ### Scalar functions
