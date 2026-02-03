@@ -1,96 +1,98 @@
-# WASM Similarity Test Package
+# WASM Similarity Example & Tests
 
-This is a test npm package that demonstrates the usage of the `wasm-similarity` WebAssembly module for computing cosine similarity between vectors.
-
-## Overview
-
-The `wasm-similarity` module provides three main functions:
-
-1. **`greet()`** - A simple greeting function (calls `alert()` in browser environments)
-2. **`cosine_similarity(vector1, vector2)`** - Computes cosine similarity between two vectors
-3. **`cosine_similarity_dataspace_json(jsonString)`** - Processes a JSON dataspace and returns text vectors sorted by similarity to a query vector
+This package demonstrates and tests the `wasm-similarity` WebAssembly module for computing vector similarity and distance metrics.
 
 ## Installation
 
-This test package uses a local file dependency to the WASM module:
+This package uses a local file dependency to the WASM module:
 
 ```bash
 npm install
 ```
 
+## API
+
+### Scalar functions
+
+All scalar functions accept `Float64Array` (or plain arrays) unless noted otherwise.
+
+| Function | Returns | Description |
+|---|---|---|
+| `cosine_similarity(a, b)` | `number` in [-1, 1] | Cosine similarity between two vectors |
+| `cosine_distance(a, b)` | `number` in [0, 2] | Cosine distance (1 - similarity) |
+| `euclidean_distance(a, b)` | `number` ≥ 0 | Euclidean (L2) distance |
+| `squared_euclidean_distance(a, b)` | `number` ≥ 0 | Squared Euclidean distance |
+| `jaccard_index(a, b)` | `number` in [0, 1] | Jaccard index (accepts `Int32Array`) |
+| `hit_rate(actual, predicted, tolerance)` | `number` in [0, 1] | Fraction of elements within tolerance |
+| `overshoot_rate(actual, predicted, tolerance)` | `number` in [0, 1] | Fraction of elements overshooting by more than tolerance |
+
+### Dataspace (batch) functions
+
+Rank a set of vectors against a query vector in a single call. All return a `Float64Array` of interleaved `[score, index, score, index, ...]` pairs, sorted by score.
+
+| Function | Sort order |
+|---|---|
+| `cosine_similarity_dataspace(flat, numVectors, dim, query)` | Descending (most similar first) |
+| `cosine_distance_dataspace(flat, numVectors, dim, query)` | Ascending (nearest first) |
+| `euclidean_distance_dataspace(flat, numVectors, dim, query)` | Ascending |
+| `squared_euclidean_distance_dataspace(flat, numVectors, dim, query)` | Ascending |
+| `jaccard_index_dataspace(setA, setsBFlat, numSets, setSize)` | Descending |
+
+`flat` is a `Float64Array` of all vectors concatenated (`numVectors * dim` elements).
+
+### Zero-copy functions
+
+For hot loops, you can allocate buffers directly in WASM linear memory to avoid copying:
+
+```typescript
+import { alloc_f64, dealloc_f64, cosine_similarity_raw, wasm_memory } from 'wasm-similarity';
+
+const ptr = alloc_f64(dim);
+const mem = new Float64Array(wasm_memory().buffer);
+mem.set(vector, ptr / 8);
+// ... use cosine_similarity_raw(ptrA, dimA, ptrB, dimB) ...
+dealloc_f64(ptr, dim);
+```
+
 ## Usage
 
-### Basic Import
+```typescript
+import { cosine_similarity, cosine_similarity_dataspace } from 'wasm-similarity';
 
-```javascript
-import { greet, cosine_similarity, cosine_similarity_dataspace_json } from 'wasm-similarity';
+// Scalar similarity
+const sim = cosine_similarity(
+  new Float64Array([1, 2, 3]),
+  new Float64Array([4, 5, 6]),
+);
+// ~0.975
+
+// Batch ranking
+const numVectors = 3;
+const dim = 3;
+const flat = new Float64Array([
+  1, 0, 0,
+  0, 1, 0,
+  0, 0, 1,
+]);
+const query = new Float64Array([1, 0, 0]);
+const ranked = cosine_similarity_dataspace(flat, numVectors, dim, query);
+// ranked = [1.0, 0, 0.0, 1, 0.0, 2]  (score, index pairs)
 ```
 
-### Cosine Similarity
-
-Calculate similarity between two vectors (returns a value between 0 and 1):
-
-```javascript
-const vector1 = [1.0, 2.0, 3.0];
-const vector2 = [4.0, 5.0, 6.0];
-const similarity = cosine_similarity(vector1, vector2);
-console.log(similarity); // ~0.975
-```
-
-### JSON Dataspace Processing
-
-Process multiple text vectors and rank them by similarity to a query vector:
-
-```javascript
-const dataspace = {
-    textVectors: [
-        [1.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0],
-        [0.0, 0.0, 1.0],
-        [1.0, 1.0, 0.0]
-    ],
-    queryVectors: [1.0, 0.0, 0.0]
-};
-
-const result = cosine_similarity_dataspace_json(JSON.stringify(dataspace));
-console.log(result); // Returns vectors sorted by similarity to query
-```
-
-## Running Tests
-
-Execute the test suite to verify all functionality:
+## Running tests
 
 ```bash
 npm test
-# or
-npm start
 ```
 
-## Test Results
+## Running benchmarks
 
-The test suite verifies:
-- ✅ Basic function imports and calls
-- ✅ Cosine similarity calculations with various vector pairs
-- ✅ JSON dataspace processing with proper sorting
-- ✅ Error handling for invalid inputs
-- ✅ Edge cases (empty vectors, malformed JSON)
-
-## Technical Notes
-
-- The module is compiled from Rust using `wasm-bindgen`
-- Uses ES modules (`"type": "module"`)
-- WebAssembly import may show experimental warnings in Node.js (this is normal)
-- The `greet()` function calls `alert()` which is not available in Node.js environments
+```bash
+node --experimental-strip-types benchmarks/benchmark.ts
+node --experimental-strip-types benchmarks/benchmark-ml-distance.ts
+```
 
 ## Requirements
 
 - Node.js with ES modules support
-- The compiled WASM artifacts must be available in the `../pkg` directory
-
-## Performance
-
-The WebAssembly implementation provides high-performance vector similarity calculations suitable for:
-- Large-scale vector comparisons
-- Real-time similarity searches  
-- Browser and Node.js environments
-- Memory-efficient processing of vector datasets
+- The compiled WASM artifacts in the `../pkg` directory (run `../build.sh` to build)
