@@ -31,7 +31,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Extract test data
-        run: tar -xzf test-data/test-data.tar.gz -C test-data
+        run: tar -xzf test-data/test-data.tar.gz
 
       - name: Test
         run: make test
