@@ -5,7 +5,7 @@
   "main": "wasm-similarity.test.ts",
   "type": "module",
   "scripts": {
-    "pretest": "cd .. && ./build.sh",
+    "pretest": "cd .. && make build",
     "test": "node --test wasm-similarity.test.ts",
     "start": "./wasm-similarity.test.ts"
   },

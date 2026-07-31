@@ -188,7 +188,7 @@ Requires `wasm-bindgen-cli` and the `wasm32-unknown-unknown` target:
 ```bash
 rustup target add wasm32-unknown-unknown
 cargo install wasm-bindgen-cli
-./build.sh
+make build
 ```
 
 ## Run tests

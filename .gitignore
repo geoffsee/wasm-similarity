@@ -3,7 +3,8 @@
 Cargo.lock
 bin/
 pkg/
-test-data/
+test-data/*
+!test-data/test-data.tar.gz
 node_modules/
 /.idea/
 /example/package-lock.json

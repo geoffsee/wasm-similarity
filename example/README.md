@@ -95,4 +95,4 @@ node --experimental-strip-types benchmarks/benchmark-ml-distance.ts
 ## Requirements
 
 - Node.js with ES modules support
-- The compiled WASM artifacts in the `../pkg` directory (run `../build.sh` to build)
+- The compiled WASM artifacts in the `../pkg` directory (run `make build` from the repo root)

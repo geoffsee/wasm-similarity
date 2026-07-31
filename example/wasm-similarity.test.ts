@@ -24,7 +24,7 @@ import {
 const rootDir = resolve(__dirname, '..');
 const dataspaceFile = resolve(rootDir, 'test-data', 'vector_dataspace.json');
 if (!existsSync(dataspaceFile)) {
-    execSync(`tar xzf test-data.tar.gz test-data/vector_dataspace.json`, { cwd: rootDir });
+    execSync(`tar xzf test-data/test-data.tar.gz test-data/vector_dataspace.json`, { cwd: rootDir });
 }
 
 const dataspaceJson = readFileSync(dataspaceFile, 'utf-8');
