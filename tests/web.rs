@@ -8,11 +8,10 @@ use rust_embed::Embed;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen_test::*;
 use wasm_similarity::{
-    cosine_distance, cosine_similarity, euclidean_distance,
-    hit_rate, jaccard_index, overshoot_rate, squared_euclidean_distance,
-    cosine_similarity_dataspace, cosine_distance_dataspace,
-    euclidean_distance_dataspace, squared_euclidean_distance_dataspace,
-    jaccard_index_dataspace,
+    cosine_distance, cosine_distance_dataspace, cosine_similarity, cosine_similarity_dataspace,
+    euclidean_distance, euclidean_distance_dataspace, hit_rate, jaccard_index,
+    jaccard_index_dataspace, overshoot_rate, squared_euclidean_distance,
+    squared_euclidean_distance_dataspace,
 };
 use web_sys::console;
 
@@ -22,7 +21,6 @@ wasm_bindgen_test_configure!(run_in_dedicated_worker);
 fn pass() {
     assert_eq!(1 + 1, 2);
 }
-
 
 #[derive(Embed)]
 #[folder = "test-data/"]
@@ -63,7 +61,7 @@ impl VectorDataspace {
                 "test-data/vector_dataspace.json" | "vector_dataspace.json" => {
                     let bytes: &[u8] = include_bytes!("../test-data/vector_dataspace.json");
                     std::str::from_utf8(bytes).expect("Invalid UTF-8")
-                },
+                }
                 _ => panic!("Asset not found: {}", path),
             };
             serde_json::from_str(json_str).expect("Failed to parse JSON")
@@ -83,7 +81,10 @@ impl VectorDataspace {
 
 /// Helper to parse interleaved [score, index, score, index, ...] results
 fn parse_scored(result: &[f64]) -> Vec<(f64, usize)> {
-    result.chunks_exact(2).map(|c| (c[0], c[1] as usize)).collect()
+    result
+        .chunks_exact(2)
+        .map(|c| (c[0], c[1] as usize))
+        .collect()
 }
 
 #[wasm_bindgen_test]
@@ -109,7 +110,10 @@ fn embeds_the_json_file_in_assets() {
         return;
     }
     let bytes: &[u8] = include_bytes!("../test-data/vector_dataspace.json");
-    assert!(bytes.len() > 0, "Expected to include vector_dataspace.json via include_bytes!");
+    assert!(
+        bytes.len() > 0,
+        "Expected to include vector_dataspace.json via include_bytes!"
+    );
 }
 
 #[wasm_bindgen_test]
@@ -241,11 +245,23 @@ fn test_squared_euclidean_distance_dataspace() {
 fn test_squared_euclidean_equals_square_of_euclidean_dataspace() {
     let ds = VectorDataspace::from_json("test-data/vector_dataspace.json");
     let (flat, num, dim) = ds.flatten();
-    let euc = parse_scored(&euclidean_distance_dataspace(&flat, num, dim, &ds.query_vectors));
-    let sq = parse_scored(&squared_euclidean_distance_dataspace(&flat, num, dim, &ds.query_vectors));
+    let euc = parse_scored(&euclidean_distance_dataspace(
+        &flat,
+        num,
+        dim,
+        &ds.query_vectors,
+    ));
+    let sq = parse_scored(&squared_euclidean_distance_dataspace(
+        &flat,
+        num,
+        dim,
+        &ds.query_vectors,
+    ));
     // Build index->score map from euclidean
     let mut euc_by_idx = std::collections::HashMap::new();
-    for (s, i) in &euc { euc_by_idx.insert(*i, *s); }
+    for (s, i) in &euc {
+        euc_by_idx.insert(*i, *s);
+    }
     for (s, i) in &sq {
         let ed = euc_by_idx[i];
         assert!((s - ed * ed).abs() < 1e-4);

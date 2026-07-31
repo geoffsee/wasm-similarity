@@ -33,13 +33,20 @@ pub fn alloc_f64(len: usize) -> *mut f64 {
 #[wasm_bindgen]
 pub fn dealloc_f64(ptr: *mut f64, len: usize) {
     let layout = std::alloc::Layout::from_size_align(len * 8, 8).unwrap();
-    unsafe { std::alloc::dealloc(ptr as *mut u8, layout); }
+    unsafe {
+        std::alloc::dealloc(ptr as *mut u8, layout);
+    }
 }
 
 /// Cosine similarity operating on raw pointers into WASM linear memory.
 /// Use with `alloc_f64` + direct memory writes to avoid per-call copy overhead.
 #[wasm_bindgen]
-pub fn cosine_similarity_raw(ptr_a: *const f64, len_a: usize, ptr_b: *const f64, len_b: usize) -> f64 {
+pub fn cosine_similarity_raw(
+    ptr_a: *const f64,
+    len_a: usize,
+    ptr_b: *const f64,
+    len_b: usize,
+) -> f64 {
     let a = unsafe { std::slice::from_raw_parts(ptr_a, len_a) };
     let b = unsafe { std::slice::from_raw_parts(ptr_b, len_b) };
     metrics::cosine_similarity(a, b)
@@ -47,7 +54,12 @@ pub fn cosine_similarity_raw(ptr_a: *const f64, len_a: usize, ptr_b: *const f64,
 
 /// Cosine distance operating on raw pointers into WASM linear memory.
 #[wasm_bindgen]
-pub fn cosine_distance_raw(ptr_a: *const f64, len_a: usize, ptr_b: *const f64, len_b: usize) -> f64 {
+pub fn cosine_distance_raw(
+    ptr_a: *const f64,
+    len_a: usize,
+    ptr_b: *const f64,
+    len_b: usize,
+) -> f64 {
     let a = unsafe { std::slice::from_raw_parts(ptr_a, len_a) };
     let b = unsafe { std::slice::from_raw_parts(ptr_b, len_b) };
     metrics::cosine_distance(a, b)
@@ -55,7 +67,12 @@ pub fn cosine_distance_raw(ptr_a: *const f64, len_a: usize, ptr_b: *const f64, l
 
 /// Euclidean distance operating on raw pointers into WASM linear memory.
 #[wasm_bindgen]
-pub fn euclidean_distance_raw(ptr_a: *const f64, len_a: usize, ptr_b: *const f64, len_b: usize) -> f64 {
+pub fn euclidean_distance_raw(
+    ptr_a: *const f64,
+    len_a: usize,
+    ptr_b: *const f64,
+    len_b: usize,
+) -> f64 {
     let a = unsafe { std::slice::from_raw_parts(ptr_a, len_a) };
     let b = unsafe { std::slice::from_raw_parts(ptr_b, len_b) };
     metrics::euclidean_distance(a, b)
@@ -63,7 +80,12 @@ pub fn euclidean_distance_raw(ptr_a: *const f64, len_a: usize, ptr_b: *const f64
 
 /// Squared Euclidean distance operating on raw pointers into WASM linear memory.
 #[wasm_bindgen]
-pub fn squared_euclidean_distance_raw(ptr_a: *const f64, len_a: usize, ptr_b: *const f64, len_b: usize) -> f64 {
+pub fn squared_euclidean_distance_raw(
+    ptr_a: *const f64,
+    len_a: usize,
+    ptr_b: *const f64,
+    len_b: usize,
+) -> f64 {
     let a = unsafe { std::slice::from_raw_parts(ptr_a, len_a) };
     let b = unsafe { std::slice::from_raw_parts(ptr_b, len_b) };
     metrics::squared_euclidean_distance(a, b)
@@ -174,7 +196,12 @@ pub fn squared_euclidean_distance_dataspace(
     dim: usize,
     query_vector: &[f64],
 ) -> Vec<f64> {
-    rank_vector_dataspace::<SquaredEuclideanMetric>(text_vectors_flat, num_vectors, dim, query_vector)
+    rank_vector_dataspace::<SquaredEuclideanMetric>(
+        text_vectors_flat,
+        num_vectors,
+        dim,
+        query_vector,
+    )
 }
 
 /// Computes Jaccard index scores for each set in `sets_b_flat` against `set_a`.
@@ -227,8 +254,12 @@ impl DataspaceMetric for CosineSimMetric {
     fn compute(query: &[f64], candidate: &[f64]) -> f64 {
         metrics::cosine_similarity(query, candidate)
     }
-    fn rank_order() -> Ordering { Ordering::Greater }
-    fn filter(score: f64) -> bool { score.is_finite() && score > 0.0 }
+    fn rank_order() -> Ordering {
+        Ordering::Greater
+    }
+    fn filter(score: f64) -> bool {
+        score.is_finite() && score > 0.0
+    }
 }
 
 struct CosineDistMetric;
@@ -236,8 +267,12 @@ impl DataspaceMetric for CosineDistMetric {
     fn compute(query: &[f64], candidate: &[f64]) -> f64 {
         metrics::cosine_distance(query, candidate)
     }
-    fn rank_order() -> Ordering { Ordering::Less }
-    fn filter(score: f64) -> bool { score.is_finite() }
+    fn rank_order() -> Ordering {
+        Ordering::Less
+    }
+    fn filter(score: f64) -> bool {
+        score.is_finite()
+    }
 }
 
 struct EuclideanMetric;
@@ -245,8 +280,12 @@ impl DataspaceMetric for EuclideanMetric {
     fn compute(query: &[f64], candidate: &[f64]) -> f64 {
         metrics::euclidean_distance(query, candidate)
     }
-    fn rank_order() -> Ordering { Ordering::Less }
-    fn filter(score: f64) -> bool { score.is_finite() }
+    fn rank_order() -> Ordering {
+        Ordering::Less
+    }
+    fn filter(score: f64) -> bool {
+        score.is_finite()
+    }
 }
 
 struct SquaredEuclideanMetric;
@@ -254,8 +293,12 @@ impl DataspaceMetric for SquaredEuclideanMetric {
     fn compute(query: &[f64], candidate: &[f64]) -> f64 {
         metrics::squared_euclidean_distance(query, candidate)
     }
-    fn rank_order() -> Ordering { Ordering::Less }
-    fn filter(score: f64) -> bool { score.is_finite() }
+    fn rank_order() -> Ordering {
+        Ordering::Less
+    }
+    fn filter(score: f64) -> bool {
+        score.is_finite()
+    }
 }
 
 fn rank_vector_dataspace<M: DataspaceMetric>(

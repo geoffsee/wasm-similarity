@@ -58,11 +58,7 @@ pub fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
     let norm_a = (na0 + na1) + (na2 + na3);
     let norm_b = (nb0 + nb1) + (nb2 + nb3);
     let denom = (norm_a * norm_b).sqrt();
-    if denom == 0.0 {
-        f64::NAN
-    } else {
-        dot / denom
-    }
+    if denom == 0.0 { f64::NAN } else { dot / denom }
 }
 
 #[inline(always)]
@@ -102,7 +98,8 @@ pub fn squared_euclidean_distance(a: &[f64], b: &[f64]) -> f64 {
     }
     let tail_start = chunks * 4;
     for i in 0..remainder {
-        let d = unsafe { *a.get_unchecked(tail_start + i) } - unsafe { *b.get_unchecked(tail_start + i) };
+        let d = unsafe { *a.get_unchecked(tail_start + i) }
+            - unsafe { *b.get_unchecked(tail_start + i) };
         s0 += d * d;
     }
     (s0 + s1) + (s2 + s3)
