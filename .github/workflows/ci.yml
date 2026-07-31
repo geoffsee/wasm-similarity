@@ -22,7 +22,10 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Setup Rust
-        run: rustup update stable && rustup default stable
+        run: |
+          rustup update stable
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
 
       - name: Cargo fmt (check)
         run: cargo fmt --all -- --check
