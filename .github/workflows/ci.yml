@@ -19,7 +19,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
 
       - name: Setup Rust
         run: |
@@ -27,11 +27,19 @@ jobs:
           rustup default stable
           rustup target add wasm32-unknown-unknown
 
+      - name: Install wasm-bindgen-cli
+        run: cargo install wasm-bindgen-cli --version 0.2.101 --locked
+
+      - uses: oven-sh/setup-bun@v2
+
       - name: Cargo fmt (check)
         run: cargo fmt --all -- --check
 
-      - name: Extract test data
-        run: tar -xzf test-data/test-data.tar.gz
+      - name: Build WASM package
+        run: make build
 
-      - name: Test
-        run: make test
+      - name: Example tests
+        working-directory: example
+        run: |
+          bun install
+          bun test
