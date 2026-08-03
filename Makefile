@@ -5,6 +5,7 @@ ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 PKG_DIR  := $(ROOT_DIR)/pkg
 WASM_OUT := $(ROOT_DIR)/target/wasm32-unknown-unknown/release/wasm_similarity.wasm
 TEMPLATES := $(ROOT_DIR)/templates
+WASM_BINDGEN_VERSION := $(shell sed -n 's/^wasm-bindgen = "=\(.*\)"/\1/p' "$(ROOT_DIR)/Cargo.toml")
 
 # publish options (override on the command line):
 #   make publish PUBLISHER=npm BUMP=patch DRY_RUN=1 REBUILD=1
@@ -37,6 +38,12 @@ help:
 
 build:
 	@rm -rf "$(PKG_DIR)"
+	@if [ -z "$(WASM_BINDGEN_VERSION)" ]; then \
+		echo "[build] error: could not parse wasm-bindgen version from Cargo.toml"; \
+		exit 1; \
+	fi
+	@echo "[build] Ensuring wasm-bindgen-cli $(WASM_BINDGEN_VERSION)..."
+	@cargo install wasm-bindgen-cli --version "$(WASM_BINDGEN_VERSION)" --locked --force
 	@echo "[build] Compiling wasm32-unknown-unknown (release)..."
 	cargo build --target wasm32-unknown-unknown --release
 	@echo "[build] Running wasm-bindgen..."
