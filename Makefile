@@ -83,7 +83,11 @@ build:
 		'  ],' \
 		'  "keywords": ["wasm", "webassembly", "similarity", "cosine", "vectors"],' \
 		'  "author": "geoffsee",' \
-		'  "license": "AGPL-3.0"' \
+		'  "license": "AGPL-3.0",' \
+		'  "repository": {' \
+		'    "type": "git",' \
+		'    "url": "https://github.com/geoffsee/wasm-similarity"' \
+		'  }' \
 		'}' > "$(PKG_DIR)/package.json"
 	@cp "$(ROOT_DIR)/README.md" "$(PKG_DIR)/README.md"
 	@echo "[build] Done. Output in pkg/"
