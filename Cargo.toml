@@ -1,6 +1,6 @@
 [package]
 name = "wasm-similarity"
-version = "1.0.12"
+version = "1.0.13"
 authors = ["geoffsee"]
 edition = "2024"
 description = "WebAssembly-powered cosine similarity utilities for JavaScript/TypeScript"
