@@ -87,6 +87,21 @@ index fda0835..09c2c4b 100644
  
        - name: Build package
          run: |
+diff --git a/.github/workflows/supervisor.yml b/.github/workflows/supervisor.yml
+index 8c48c42..e4c4187 100644
+--- a/.github/workflows/supervisor.yml
++++ b/.github/workflows/supervisor.yml
+@@ -33,7 +33,10 @@ jobs:
+       - name: Run Cursor Agent
+         env:
+           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
++          # RELEASE_TOKEN: admin pushes / Dependabot comments (needs workflow scope for .github/workflows/*).
+           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
++          # Native Actions token can modify workflows; keep available if the agent runtime does not strip it.
++          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         run: |
+           agent -p "$(cat <<'PROMPT'
+           You are the weekly unsticker for this repository.
 diff --git a/.github/workflows/update-outdated-prs.yml b/.github/workflows/update-outdated-prs.yml
 index 7df7b68..6ba40b8 100644
 --- a/.github/workflows/update-outdated-prs.yml
