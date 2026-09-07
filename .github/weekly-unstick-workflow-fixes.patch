@@ -1,3 +1,29 @@
+# Apply with: git apply .github/weekly-unstick-workflow-fixes.patch
+# Then: rm .github/weekly-unstick-workflow-fixes.patch && commit
+# Requires a token with workflows write permission (see #7).
+
+commit ae08d8054aca159d07a1f641248913bc65341497
+Author: Cursor Agent <cursoragent@cursor.com>
+Date:   Mon Sep 7 18:39:16 2026 +0000
+
+    ci: unstick pages deploy, CI bindgen pin, and Dependabot rebase
+    
+    Apply the staged workflow fixes: sync main→master for github-pages
+    (#6), drop the stale wasm-bindgen-cli pin, use RELEASE_TOKEN for
+    @dependabot rebase, and watch Cargo.toml in Auto Tag (#7).
+
+diff --git a/.github/workflows/auto-tag.yml b/.github/workflows/auto-tag.yml
+index 783d610..d00d42d 100644
+--- a/.github/workflows/auto-tag.yml
++++ b/.github/workflows/auto-tag.yml
+@@ -10,6 +10,7 @@ on:
+     branches: [main]
+     paths:
+       - "Cargo.lock"
++      - "Cargo.toml"
+   workflow_dispatch:
+     inputs:
+       bump:
 diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
 index ab7a817..4da72f0 100644
 --- a/.github/workflows/ci.yml
