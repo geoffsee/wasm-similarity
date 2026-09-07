@@ -6,23 +6,11 @@
 # Prefer instead: Environments → github-pages → allow branch `main` (#6),
 # then drop the docs.yml master-sync hunk from this patch before applying.
 #
---- a/.github/workflows/auto-tag.yml
-
-+++ b/.github/workflows/auto-tag.yml
-
-@@ -10,6 +10,7 @@
-     branches: [main]
-     paths:
-       - "Cargo.lock"
-+      - "Cargo.toml"
-   workflow_dispatch:
-     inputs:
-       bump:
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index ab7a817..56820c4 100644
 --- a/.github/workflows/ci.yml
-
 +++ b/.github/workflows/ci.yml
-
-@@ -27,8 +27,7 @@
+@@ -27,8 +27,7 @@ jobs:
            rustup default stable
            rustup target add wasm32-unknown-unknown
  
@@ -32,10 +20,10 @@
  
        - uses: oven-sh/setup-bun@v2
  
+diff --git a/.github/workflows/docs.yml b/.github/workflows/docs.yml
+index 14245b5..a28c41d 100644
 --- a/.github/workflows/docs.yml
-
 +++ b/.github/workflows/docs.yml
-
 @@ -1,8 +1,12 @@
  name: Deploy Rustdoc to GitHub Pages
  
@@ -50,7 +38,7 @@
    workflow_dispatch:
  
  permissions:
-@@ -15,7 +19,23 @@
+@@ -15,7 +19,23 @@ concurrency:
    cancel-in-progress: true
  
  jobs:
@@ -74,7 +62,7 @@
      runs-on: ubuntu-latest
      steps:
        - uses: actions/checkout@v7
-@@ -34,6 +54,9 @@
+@@ -34,6 +54,9 @@ jobs:
  
    deploy:
      needs: build
@@ -84,11 +72,11 @@
      runs-on: ubuntu-latest
      environment:
        name: github-pages
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index fda0835..09c2c4b 100644
 --- a/.github/workflows/release.yml
-
 +++ b/.github/workflows/release.yml
-
-@@ -32,10 +32,16 @@
+@@ -32,10 +32,16 @@ jobs:
            rustup default stable
            rustup target add wasm32-unknown-unknown
  
@@ -107,11 +95,11 @@
  
        - name: Build package
          run: |
+diff --git a/.github/workflows/supervisor.yml b/.github/workflows/supervisor.yml
+index 8c48c42..e4c4187 100644
 --- a/.github/workflows/supervisor.yml
-
 +++ b/.github/workflows/supervisor.yml
-
-@@ -33,7 +33,10 @@
+@@ -33,7 +33,10 @@ jobs:
        - name: Run Cursor Agent
          env:
            CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
@@ -122,11 +110,11 @@
          run: |
            agent -p "$(cat <<'PROMPT'
            You are the weekly unsticker for this repository.
+diff --git a/.github/workflows/update-outdated-prs.yml b/.github/workflows/update-outdated-prs.yml
+index 7df7b68..6ba40b8 100644
 --- a/.github/workflows/update-outdated-prs.yml
-
 +++ b/.github/workflows/update-outdated-prs.yml
-
-@@ -17,6 +17,7 @@
+@@ -17,6 +17,7 @@ jobs:
      steps:
        - name: Update out-of-date PR branches
          env:
@@ -134,7 +122,7 @@
            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
          run: |
            set -euo pipefail
-@@ -28,8 +29,12 @@
+@@ -28,8 +29,12 @@ jobs:
                echo "Updating PR #$number ($author)..."
                case "$author" in
                  dependabot[bot]|app/dependabot)
@@ -149,3 +137,15 @@
                    ;;
                  *)
                    gh pr update-branch "$number" --repo "$GITHUB_REPOSITORY" || {
+diff --git a/.github/workflows/auto-tag.yml b/.github/workflows/auto-tag.yml
+index 783d610..d00d42d 100644
+--- a/.github/workflows/auto-tag.yml
++++ b/.github/workflows/auto-tag.yml
+@@ -10,6 +10,7 @@ on:
+     branches: [main]
+     paths:
+       - "Cargo.lock"
++      - "Cargo.toml"
+   workflow_dispatch:
+     inputs:
+       bump:
