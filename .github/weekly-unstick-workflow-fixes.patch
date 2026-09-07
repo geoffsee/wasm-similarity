@@ -1,22 +1,16 @@
-# Apply with: git apply .github/weekly-unstick-workflow-fixes.patch
-# Then: rm .github/weekly-unstick-workflow-fixes.patch && commit
-# Requires a token with workflows write permission (see #7).
-
-commit ae08d8054aca159d07a1f641248913bc65341497
-Author: Cursor Agent <cursoragent@cursor.com>
-Date:   Mon Sep 7 18:39:16 2026 +0000
-
-    ci: unstick pages deploy, CI bindgen pin, and Dependabot rebase
-    
-    Apply the staged workflow fixes: sync main→master for github-pages
-    (#6), drop the stale wasm-bindgen-cli pin, use RELEASE_TOKEN for
-    @dependabot rebase, and watch Cargo.toml in Auto Tag (#7).
-
-diff --git a/.github/workflows/auto-tag.yml b/.github/workflows/auto-tag.yml
-index 783d610..d00d42d 100644
+# Apply with a workflows-scoped token (see #7):
+#   git apply .github/weekly-unstick-workflow-fixes.patch
+#   rm .github/weekly-unstick-workflow-fixes.patch
+#   git add -A .github && git commit -m "ci: apply weekly unstick workflow fixes"
+#
+# Prefer instead: Environments → github-pages → allow branch `main` (#6),
+# then drop the docs.yml master-sync hunk from this patch before applying.
+#
 --- a/.github/workflows/auto-tag.yml
+
 +++ b/.github/workflows/auto-tag.yml
-@@ -10,6 +10,7 @@ on:
+
+@@ -10,6 +10,7 @@
      branches: [main]
      paths:
        - "Cargo.lock"
@@ -24,24 +18,24 @@ index 783d610..d00d42d 100644
    workflow_dispatch:
      inputs:
        bump:
-diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
-index ab7a817..4da72f0 100644
 --- a/.github/workflows/ci.yml
+
 +++ b/.github/workflows/ci.yml
-@@ -27,8 +27,7 @@ jobs:
+
+@@ -27,8 +27,7 @@
            rustup default stable
            rustup target add wasm32-unknown-unknown
  
 -      - name: Install wasm-bindgen-cli
 -        run: cargo install wasm-bindgen-cli --version 0.2.101 --locked --force
-+      # make build installs wasm-bindgen-cli matching Cargo.toml (=0.2.126).
++      # make build installs wasm-bindgen-cli matching Cargo.toml.
  
        - uses: oven-sh/setup-bun@v2
  
-diff --git a/.github/workflows/docs.yml b/.github/workflows/docs.yml
-index 14245b5..a28c41d 100644
 --- a/.github/workflows/docs.yml
+
 +++ b/.github/workflows/docs.yml
+
 @@ -1,8 +1,12 @@
  name: Deploy Rustdoc to GitHub Pages
  
@@ -56,7 +50,7 @@ index 14245b5..a28c41d 100644
    workflow_dispatch:
  
  permissions:
-@@ -15,7 +19,23 @@ concurrency:
+@@ -15,7 +19,23 @@
    cancel-in-progress: true
  
  jobs:
@@ -80,7 +74,7 @@ index 14245b5..a28c41d 100644
      runs-on: ubuntu-latest
      steps:
        - uses: actions/checkout@v7
-@@ -34,6 +54,9 @@ jobs:
+@@ -34,6 +54,9 @@
  
    deploy:
      needs: build
@@ -90,11 +84,11 @@ index 14245b5..a28c41d 100644
      runs-on: ubuntu-latest
      environment:
        name: github-pages
-diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
-index fda0835..09c2c4b 100644
 --- a/.github/workflows/release.yml
+
 +++ b/.github/workflows/release.yml
-@@ -32,10 +32,16 @@ jobs:
+
+@@ -32,10 +32,16 @@
            rustup default stable
            rustup target add wasm32-unknown-unknown
  
@@ -113,11 +107,11 @@ index fda0835..09c2c4b 100644
  
        - name: Build package
          run: |
-diff --git a/.github/workflows/supervisor.yml b/.github/workflows/supervisor.yml
-index 8c48c42..e4c4187 100644
 --- a/.github/workflows/supervisor.yml
+
 +++ b/.github/workflows/supervisor.yml
-@@ -33,7 +33,10 @@ jobs:
+
+@@ -33,7 +33,10 @@
        - name: Run Cursor Agent
          env:
            CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
@@ -128,11 +122,11 @@ index 8c48c42..e4c4187 100644
          run: |
            agent -p "$(cat <<'PROMPT'
            You are the weekly unsticker for this repository.
-diff --git a/.github/workflows/update-outdated-prs.yml b/.github/workflows/update-outdated-prs.yml
-index 7df7b68..6ba40b8 100644
 --- a/.github/workflows/update-outdated-prs.yml
+
 +++ b/.github/workflows/update-outdated-prs.yml
-@@ -17,6 +17,7 @@ jobs:
+
+@@ -17,6 +17,7 @@
      steps:
        - name: Update out-of-date PR branches
          env:
@@ -140,7 +134,7 @@ index 7df7b68..6ba40b8 100644
            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
          run: |
            set -euo pipefail
-@@ -28,8 +29,12 @@ jobs:
+@@ -28,8 +29,12 @@
                echo "Updating PR #$number ($author)..."
                case "$author" in
                  dependabot[bot]|app/dependabot)
