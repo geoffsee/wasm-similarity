@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test-targets:
     name: Test (${{ matrix.target }})
@@ -63,6 +66,7 @@ jobs:
   # Keep the stable check name required by the repository ruleset.
   test:
     name: Test
+    permissions: {}
     needs: test-targets
     if: ${{ always() }}
     runs-on: ubuntu-latest
