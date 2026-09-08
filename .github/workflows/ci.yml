@@ -5,8 +5,8 @@ on:
   pull_request:
 
 jobs:
-  test:
-    name: Test
+  test-targets:
+    name: Test (${{ matrix.target }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -59,3 +59,15 @@ jobs:
         run: |
           npm install --no-save ../${{ matrix.package-dir }}
           node --test wasm-similarity.test.ts
+
+  # Keep the stable check name required by the repository ruleset.
+  test:
+    name: Test
+    needs: test-targets
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require both target test jobs to succeed
+        env:
+          TEST_RESULT: ${{ needs.test-targets.result }}
+        run: test "$TEST_RESULT" = success
