@@ -13,6 +13,16 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: wasm32-unknown-unknown
+            package-dir: pkg
+          - target: wasm64-unknown-unknown
+            package-dir: pkg-wasm64
+    env:
+      WASM_TARGET: ${{ matrix.target }}
     steps:
       - uses: actions/checkout@v7
 
@@ -24,7 +34,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml', '**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.toml', '**/Cargo.lock') }}
 
       - name: Setup Rust
         run: |
@@ -32,18 +42,12 @@ jobs:
           rustup default stable
           rustup target add wasm32-unknown-unknown
 
-      - name: Install wasm toolchain
-        run: |
-          cargo install wasm-bindgen-cli --locked || cargo install wasm-bindgen-cli
-          cargo install wasm-pack --locked || cargo install wasm-pack
+      - name: Setup wasm64 Rust toolchain
+        if: matrix.target == 'wasm64-unknown-unknown'
+        run: rustup toolchain install nightly --profile minimal --component rust-src
 
       - name: Build package
-        run: |
-          if [ -f Makefile ] && grep -q '^build:' Makefile; then
-            make build
-          else
-            wasm-pack build --target web --release
-          fi
+        run: make build
 
       - uses: actions/setup-node@v7
         with:
@@ -53,6 +57,19 @@ jobs:
       - name: Ensure modern npm for OIDC trusted publishing
         run: npm install -g npm@latest
 
+      - name: Validate package and JavaScript API
+        run: node --test tests/check-package.test.mjs tests/package.test.mjs
+
+      - name: Example tests
+        working-directory: example
+        run: |
+          npm install --no-save ../${{ matrix.package-dir }}
+          node --test wasm-similarity.test.ts
+
       - name: Publish pkg to npm
-        working-directory: pkg
-        run: npm publish --access public --provenance --ignore-scripts
+        working-directory: ${{ matrix.package-dir }}
+        # The package's publishConfig selects latest for wasm32 and wasm64
+        # for the opt-in prerelease, preserving the default install target.
+        run: |
+          PUBLISH_TAG=$(node -p 'JSON.parse(require("fs").readFileSync("package.json", "utf8")).publishConfig.tag')
+          npm publish --access public --provenance --ignore-scripts --tag "$PUBLISH_TAG"
