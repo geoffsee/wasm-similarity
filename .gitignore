@@ -2,6 +2,7 @@
 **/*.rs.bk
 bin/
 pkg/
+pkg-wasm64/
 test-data/*
 !test-data/test-data.tar.gz
 node_modules/

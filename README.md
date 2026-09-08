@@ -25,6 +25,25 @@ JavaScript is not great at crunching large floating-point arrays. This library m
 npm install wasm-similarity
 ```
 
+The default package targets `wasm32-unknown-unknown`. For a release with a
+wasm64 build, opt in to `wasm64-unknown-unknown` using its prerelease version:
+
+```bash
+npm install 'wasm-similarity@<version>-wasm64'
+```
+
+Replace `<version>` with the release version (for example, `1.0.14`, giving `1.0.14-wasm64`).
+Use `npm install wasm-similarity@wasm64` for the latest wasm64 build.
+The JavaScript API and imports are the same. Use Node.js 24 or newer; other
+runtimes must support WebAssembly memory64, including 64-bit tables.
+Node.js 22 cannot load this build, even with its memory64 flag. Installing
+without a tag continues to select wasm32. Older releases are not
+retroactively given wasm64 builds.
+
+Use the hyphen in `<version>-wasm64`: `<version>.wasm64` is not a valid npm
+semantic version, and npm can misinterpret it as a different version even if
+a matching dist-tag exists (for example, `1.0.14.wasm64` becomes `1.0.1-4.wasm64`).
+
 ## Docs
 
 Full API documentation with examples is published at:\
@@ -190,6 +209,33 @@ rustup target add wasm32-unknown-unknown
 cargo install wasm-bindgen-cli
 make build
 ```
+
+To build wasm64, install nightly Rust with `rust-src`; Rust does not distribute
+a prebuilt standard library for this target:
+
+```bash
+rustup toolchain install nightly --profile minimal --component rust-src
+make build WASM_TARGET=wasm64-unknown-unknown
+WASM_TARGET=wasm64-unknown-unknown node --test tests/package.test.mjs
+```
+
+The build compiles the standard library using `-Z build-std=std,panic_abort`
+and enables wasm-bindgen multivalue returns for the batch APIs. It writes
+the package to `pkg-wasm64/`, alongside the default `pkg/` output.
+If `wasm-opt` is installed, it must support memory64. Use `WASM64_TOOLCHAIN`
+to select a specific nightly toolchain.
+
+Each release builds and tests both targets, publishing wasm32 under `latest`
+and wasm64 under `wasm64`, with version `<version>-wasm64`. To preview a
+local wasm64 publish:
+
+```bash
+make publish WASM_TARGET=wasm64-unknown-unknown PUBLISHER=npm DRY_RUN=1
+```
+
+Set the version in `Cargo.toml` before building both variants. The wasm64
+publish path does not accept `BUMP`, keeping its version aligned with
+the corresponding wasm32 release.
 
 ## Run tests
 

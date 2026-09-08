@@ -4,10 +4,23 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
-  test:
-    name: Test
+  test-targets:
+    name: Test (${{ matrix.target }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: wasm32-unknown-unknown
+            package-dir: pkg
+          - target: wasm64-unknown-unknown
+            package-dir: pkg-wasm64
+    env:
+      WASM_TARGET: ${{ matrix.target }}
     steps:
       - uses: actions/checkout@v7
 
@@ -19,7 +32,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+          key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.toml', '**/Cargo.lock') }}
 
       - name: Setup Rust
         run: |
@@ -27,10 +40,13 @@ jobs:
           rustup default stable
           rustup target add wasm32-unknown-unknown
 
-      - name: Install wasm-bindgen-cli
-        run: cargo install wasm-bindgen-cli --version 0.2.101 --locked --force
+      - name: Setup wasm64 Rust toolchain
+        if: matrix.target == 'wasm64-unknown-unknown'
+        run: rustup toolchain install nightly --profile minimal --component rust-src
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24.x"
 
       - name: Cargo fmt (check)
         run: cargo fmt --all -- --check
@@ -38,8 +54,24 @@ jobs:
       - name: Build WASM package
         run: make build
 
+      - name: Validate package and JavaScript API
+        run: node --test tests/check-package.test.mjs tests/package.test.mjs
+
       - name: Example tests
         working-directory: example
         run: |
-          bun install
-          bun test
+          npm install --no-save ../${{ matrix.package-dir }}
+          node --test wasm-similarity.test.ts
+
+  # Keep the stable check name required by the repository ruleset.
+  test:
+    name: Test
+    permissions: {}
+    needs: test-targets
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require both target test jobs to succeed
+        env:
+          TEST_RESULT: ${{ needs.test-targets.result }}
+        run: test "$TEST_RESULT" = success
