@@ -3,109 +3,32 @@
 #   rm .github/weekly-unstick-workflow-fixes.patch
 #   git add -A .github && git commit -m "ci: apply weekly unstick workflow fixes"
 #
-# Prefer instead: Environments → github-pages → allow branch `main` (#6),
-# then drop the docs.yml master-sync hunk from this patch before applying.
+# Note: github-pages now allows `main` (issue #6 resolved on 2026-09-08 deploy).
+# Do not reintroduce master-sync for docs.yml.
 #
-diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
-index ab7a817..56820c4 100644
---- a/.github/workflows/ci.yml
-+++ b/.github/workflows/ci.yml
-@@ -27,8 +27,7 @@ jobs:
-           rustup default stable
-           rustup target add wasm32-unknown-unknown
- 
--      - name: Install wasm-bindgen-cli
--        run: cargo install wasm-bindgen-cli --version 0.2.101 --locked --force
-+      # make build installs wasm-bindgen-cli matching Cargo.toml.
- 
-       - uses: oven-sh/setup-bun@v2
- 
-diff --git a/.github/workflows/docs.yml b/.github/workflows/docs.yml
-index 14245b5..a28c41d 100644
---- a/.github/workflows/docs.yml
-+++ b/.github/workflows/docs.yml
-@@ -1,8 +1,12 @@
- name: Deploy Rustdoc to GitHub Pages
- 
-+# github-pages env currently allows only `master` (see #6). Until that
-+# policy includes `main`, sync main→master and deploy from master so
-+# pushes to the default branch stay green and docs keep shipping.
-+
- on:
-   push:
--    branches: [main]
-+    branches: [main, master]
+diff --git a/.github/workflows/auto-tag.yml b/.github/workflows/auto-tag.yml
+index 783d610..d00d42d 100644
+--- a/.github/workflows/auto-tag.yml
++++ b/.github/workflows/auto-tag.yml
+@@ -10,6 +10,7 @@ on:
+     branches: [main]
+     paths:
+       - "Cargo.lock"
++      - "Cargo.toml"
    workflow_dispatch:
- 
- permissions:
-@@ -15,7 +19,23 @@ concurrency:
-   cancel-in-progress: true
- 
- jobs:
-+  sync-master:
-+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-+    runs-on: ubuntu-latest
-+    permissions:
-+      contents: write
-+    steps:
-+      - uses: actions/checkout@v7
-+        with:
-+          fetch-depth: 0
-+      - name: Fast-forward master to main
-+        run: |
-+          git push origin "HEAD:refs/heads/master"
-+
-   build:
-+    if: >-
-+      github.event_name == 'workflow_dispatch' ||
-+      github.ref == 'refs/heads/master'
-     runs-on: ubuntu-latest
-     steps:
-       - uses: actions/checkout@v7
-@@ -34,6 +54,9 @@ jobs:
- 
-   deploy:
-     needs: build
-+    if: >-
-+      github.event_name == 'workflow_dispatch' ||
-+      github.ref == 'refs/heads/master'
-     runs-on: ubuntu-latest
-     environment:
-       name: github-pages
-diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
-index fda0835..09c2c4b 100644
---- a/.github/workflows/release.yml
-+++ b/.github/workflows/release.yml
-@@ -32,10 +32,16 @@ jobs:
-           rustup default stable
-           rustup target add wasm32-unknown-unknown
- 
-+      # make build installs the matching wasm-bindgen-cli with --force.
-+      # Only install here when falling back to wasm-pack (no Makefile).
-       - name: Install wasm toolchain
-         run: |
--          cargo install wasm-bindgen-cli --locked || cargo install wasm-bindgen-cli
--          cargo install wasm-pack --locked || cargo install wasm-pack
-+          if [ -f Makefile ] && grep -q '^build:' Makefile; then
-+            echo "Skipping: make build installs wasm-bindgen-cli"
-+            exit 0
-+          fi
-+          cargo install wasm-bindgen-cli --locked --force || cargo install wasm-bindgen-cli --force
-+          cargo install wasm-pack --locked --force || cargo install wasm-pack --force
- 
-       - name: Build package
-         run: |
+     inputs:
+       bump:
 diff --git a/.github/workflows/supervisor.yml b/.github/workflows/supervisor.yml
-index 8c48c42..e4c4187 100644
+index 8c48c42..f321834 100644
 --- a/.github/workflows/supervisor.yml
 +++ b/.github/workflows/supervisor.yml
 @@ -33,7 +33,10 @@ jobs:
        - name: Run Cursor Agent
          env:
            CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
-+          # RELEASE_TOKEN: admin pushes / Dependabot comments (needs workflow scope for .github/workflows/*).
++          # RELEASE_TOKEN: Contents + PR write for unstick; needs workflows scope to edit .github/workflows/*.
            GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-+          # Native Actions token can modify workflows; keep available if the agent runtime does not strip it.
++          # Native Actions token can modify workflows when RELEASE_TOKEN lacks that scope.
 +          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
          run: |
            agent -p "$(cat <<'PROMPT'
@@ -137,15 +60,3 @@ index 7df7b68..6ba40b8 100644
                    ;;
                  *)
                    gh pr update-branch "$number" --repo "$GITHUB_REPOSITORY" || {
-diff --git a/.github/workflows/auto-tag.yml b/.github/workflows/auto-tag.yml
-index 783d610..d00d42d 100644
---- a/.github/workflows/auto-tag.yml
-+++ b/.github/workflows/auto-tag.yml
-@@ -10,6 +10,7 @@ on:
-     branches: [main]
-     paths:
-       - "Cargo.lock"
-+      - "Cargo.toml"
-   workflow_dispatch:
-     inputs:
-       bump:
