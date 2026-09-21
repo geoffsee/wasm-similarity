@@ -2,12 +2,18 @@
 #   git apply .github/weekly-unstick-workflow-fixes.patch
 #   rm .github/weekly-unstick-workflow-fixes.patch
 #   git add -A .github && git commit -m "ci: apply weekly unstick workflow fixes"
+#   git push
 #
 # Note: github-pages now allows `main` (issue #6 resolved on 2026-09-08 deploy).
-# Do not reintroduce master-sync for docs.yml.
+# Do not reintroduce master-sync for docs.yml. Obsolete `master` branch deleted
+# 2026-09-21 after confirming deployment-branch policy allows only `main`.
 #
 # 2026-09-21: RELEASE_TOKEN still lacks `workflow` scope; Supervisor cannot push
-# .github/workflows/* (GH013). Re-apply once the token has Workflows: Read and write.
+# .github/workflows/* (GH013). Also lacks Issues write (cannot create
+# `dependencies` label or comment on #6/#7). Grant fine-grained PAT:
+#   - Workflows: Read and write
+#   - Issues: Read and write (labels + issue triage)
+# then re-run Supervisor or apply this patch once manually.
 #
 diff --git a/.github/workflows/auto-tag.yml b/.github/workflows/auto-tag.yml
 index 783d610..d00d42d 100644
