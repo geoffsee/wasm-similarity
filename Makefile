@@ -29,7 +29,8 @@ $(error Unsupported WASM_TARGET: $(WASM_TARGET))
 endif
 WASM_OUT := $(ROOT_DIR)/target/$(WASM_TARGET)/release/wasm_similarity.wasm
 TEMPLATES := $(ROOT_DIR)/templates
-WASM_BINDGEN_VERSION := $(shell sed -n 's/^wasm-bindgen = "=\(.*\)"/\1/p' "$(ROOT_DIR)/Cargo.toml")
+# Match wasm-bindgen-cli to the resolved crate, not the semver requirement.
+WASM_BINDGEN_VERSION := $(shell awk '/^name = "wasm-bindgen"$$/ { found = 1; next } found && /^version = / { gsub(/"/, "", $$3); print $$3; exit }' "$(ROOT_DIR)/Cargo.lock")
 
 # publish options (override on the command line):
 #   make publish PUBLISHER=npm BUMP=patch DRY_RUN=1 REBUILD=1
@@ -66,7 +67,7 @@ help:
 build:
 	@rm -rf "$(PKG_DIR)"
 	@if [ -z "$(WASM_BINDGEN_VERSION)" ]; then \
-		echo "[build] error: could not parse wasm-bindgen version from Cargo.toml"; \
+		echo "[build] error: could not parse wasm-bindgen version from Cargo.lock"; \
 		exit 1; \
 	fi
 	@echo "[build] Ensuring wasm-bindgen-cli $(WASM_BINDGEN_VERSION)..."
