@@ -4,15 +4,25 @@
 #   git add -A .github && git commit -m "ci: apply weekly unstick workflow fixes"
 #   git push
 #
-# 2026-10-05: still blocked. Pushing this diff is rejected with
-# "refusing to allow a Personal Access Token to create or update workflow
-# without workflow scope". RELEASE_TOKEN also cannot comment on issues or
-# pull requests (HTTP 403), so @dependabot rebase cannot be used. The
-# update-outdated-prs hunk merges main and pushes with that contents token
-# so checks rerun. Passing GITHUB_TOKEN into the supervisor lets a later
-# run apply this file once the Actions token is visible to the agent.
+# 2026-10-26: still blocked on workflow push + issue/PR comments.
+# Push of applied patch rejected: PAT lacks `workflow` scope / fine-grained
+# Workflows permission. RELEASE_TOKEN cannot comment/edit issues or PRs
+# (HTTP 403), create labels, or update Pages settings. Supervisor still
+# does not export GITHUB_TOKEN into the agent env (chicken-and-egg with
+# the supervisor.yml hunk below).
 #
-# github-pages deployment branch policy already allows only main (#6).
+# This week otherwise clear: no open Dependabot PRs; cargo + Actions
+# Dependabot jobs found nothing to update; main Test/CodeQL/docs green;
+# Auto Tag/Release shipped v1.0.18 to npm; cargo outdated clean; Pages
+# source is main (issue #6 deploy symptom cleared).
+#
+# Latent merge risk: ruleset `require_extra_approval_for_unattributed_changes`
+# is true with required_approving_review_count 0 — Dependabot PRs may sit
+# waiting for a write-access approval even with auto-merge enabled.
+# Missing `dependencies` label requested by dependabot.yml.
+#
+# Maintainer one-shot: grant RELEASE_TOKEN Workflows + Pull requests write,
+# or apply this patch with a workflow-scoped token, then delete this file.
 #
 diff --git a/.github/workflows/auto-tag.yml b/.github/workflows/auto-tag.yml
 index 783d610..d00d42d 100644
