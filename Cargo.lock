@@ -679,7 +679,7 @@ checksum = "4f692aa943ccd88363733b77063f32cfed5bc6cbea8e6e8b251b302f881606fe"
 
 [[package]]
 name = "wasm-similarity"
-version = "1.0.18"
+version = "1.0.19"
 dependencies = [
  "console_error_panic_hook",
  "getrandom",
