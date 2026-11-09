@@ -4,19 +4,18 @@
 #   git add -A .github && git commit -m "ci: apply weekly unstick workflow fixes"
 #   git push
 #
-# 2026-11-02: still blocked on workflow push + issue/PR comments/labels.
-# Push of applied patch on branch ci/weekly-unstick-workflow-fixes rejected:
-# PAT lacks `workflow` scope / fine-grained Workflows permission.
-# RELEASE_TOKEN cannot comment/edit/close issues or PRs (HTTP 403) or
-# create the `dependencies` label. Supervisor still does not export
-# GITHUB_TOKEN into the agent env (chicken-and-egg with supervisor.yml).
+# 2026-11-09: still blocked on workflow push + issue/PR comments/labels.
+# RELEASE_TOKEN cannot create labels, comment/close issues (HTTP 403), or
+# push .github/workflows/* (Workflows permission missing). Supervisor still
+# does not export GITHUB_TOKEN into the agent env (chicken-and-egg).
 #
 # This week: no open Dependabot PRs; Dependabot cargo/Actions jobs said
 # nothing to update, but cargo update still advanced lockfile crates
-# (wasm-bindgen 0.2.130, web-sys 0.3.107, …). Refreshed Cargo.lock so
-# Auto Tag can ship. main Test/CodeQL/docs green; last Auto Tag/Release
-# shipped v1.0.19 to npm; Pages source + github-pages branch policy are
-# main (issue #6 symptom still clear).
+# (cc 1.11.1, itoa 1.0.19, mime 0.3.18, syn 3.0.10). Refreshed Cargo.lock
+# so Auto Tag can ship. main Test/CodeQL/docs green before refresh; last
+# release was v1.0.20. minicov 0.3.8 remains behind 0.3.9 (cargo left it
+# unchanged — likely MSRV/compat). Cargo.toml floors still lag lockfile
+# for wasm-bindgen/serde/wasm-bindgen-test (Dependabot not opening bumps).
 #
 # Latent merge risk: ruleset `require_extra_approval_for_unattributed_changes`
 # is true with required_approving_review_count 0 — Dependabot PRs may sit
