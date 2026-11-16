@@ -4,18 +4,19 @@
 #   git add -A .github && git commit -m "ci: apply weekly unstick workflow fixes"
 #   git push
 #
-# 2026-11-09: still blocked on workflow push + issue/PR comments/labels.
-# RELEASE_TOKEN cannot create labels, comment/close issues (HTTP 403), or
-# push .github/workflows/* (Workflows permission missing). Supervisor still
-# does not export GITHUB_TOKEN into the agent env (chicken-and-egg).
+# 2026-11-16: still blocked on workflow push + issue/PR comments/labels.
+# RELEASE_TOKEN cannot create labels, comment/close issues (HTTP 403),
+# dispatch workflows (HTTP 403), or push .github/workflows/* (Workflows
+# permission missing). Supervisor still does not export GITHUB_TOKEN into
+# the agent env (chicken-and-egg with supervisor.yml).
 #
-# This week: no open Dependabot PRs; Dependabot cargo/Actions jobs said
-# nothing to update, but cargo update still advanced lockfile crates
-# (cc 1.11.1, itoa 1.0.19, mime 0.3.18, syn 3.0.10). Refreshed Cargo.lock
-# so Auto Tag can ship. main Test/CodeQL/docs green before refresh; last
-# release was v1.0.20. minicov 0.3.8 remains behind 0.3.9 (cargo left it
-# unchanged — likely MSRV/compat). Cargo.toml floors still lag lockfile
-# for wasm-bindgen/serde/wasm-bindgen-test (Dependabot not opening bumps).
+# Stuck this week: Dependabot #11 (rust-embed 8.13.0 → 8.14.0) merged via
+# Dependabot auto-merge using GITHUB_TOKEN. That merge push does not
+# trigger other workflows, so Auto Tag / Test never ran on main and the
+# dep bump never shipped. No open PRs; main otherwise green. Refreshed
+# Cargo.lock (bumpalo 3.20.4, cc 1.11.2, const-oid 0.10.3) so Auto Tag
+# can cut v1.0.22. minicov 0.3.8 still behind 0.3.9 (cargo left unchanged).
+# Cargo.toml floors still lag lockfile (wasm-bindgen/serde/rust-embed).
 #
 # Latent merge risk: ruleset `require_extra_approval_for_unattributed_changes`
 # is true with required_approving_review_count 0 — Dependabot PRs may sit
@@ -25,11 +26,9 @@
 # Maintainer one-shot: grant RELEASE_TOKEN Workflows + Pull requests write,
 # or apply this patch with a workflow-scoped token, then delete this file.
 #
-diff --git a/.github/workflows/auto-tag.yml b/.github/workflows/auto-tag.yml
-index 783d610..d00d42d 100644
 --- a/.github/workflows/auto-tag.yml
 +++ b/.github/workflows/auto-tag.yml
-@@ -10,6 +10,7 @@ on:
+@@ -10,6 +10,7 @@
      branches: [main]
      paths:
        - "Cargo.lock"
@@ -37,11 +36,19 @@ index 783d610..d00d42d 100644
    workflow_dispatch:
      inputs:
        bump:
-diff --git a/.github/workflows/supervisor.yml b/.github/workflows/supervisor.yml
-index 8c48c42..0ed1e34 100644
+--- a/.github/workflows/dependabot-auto-merge.yml
++++ b/.github/workflows/dependabot-auto-merge.yml
+@@ -25,4 +25,6 @@
+         run: gh pr merge --auto --squash "$PR_URL"
+         env:
+           PR_URL: ${{ github.event.pull_request.html_url }}
+-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
++          # PAT merge so the resulting push triggers Auto Tag / Test.
++          # GITHUB_TOKEN merges do not fire subsequent workflows.
++          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 --- a/.github/workflows/supervisor.yml
 +++ b/.github/workflows/supervisor.yml
-@@ -33,7 +33,11 @@ jobs:
+@@ -33,7 +33,11 @@
        - name: Run Cursor Agent
          env:
            CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
@@ -53,11 +60,9 @@ index 8c48c42..0ed1e34 100644
          run: |
            agent -p "$(cat <<'PROMPT'
            You are the weekly unsticker for this repository.
-diff --git a/.github/workflows/update-outdated-prs.yml b/.github/workflows/update-outdated-prs.yml
-index 7df7b68..20b36c4 100644
 --- a/.github/workflows/update-outdated-prs.yml
 +++ b/.github/workflows/update-outdated-prs.yml
-@@ -15,21 +15,44 @@ jobs:
+@@ -15,21 +15,44 @@
    update:
      runs-on: ubuntu-latest
      steps:
